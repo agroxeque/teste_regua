@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>agroXeque</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Incluindo a biblioteca Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Incluindo a biblioteca Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Incluindo a biblioteca FileSaver.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Incluindo a biblioteca @fielda/shp-write -->
+    <script src="https://unpkg.com/@fielda/shp-write@latest/shpwrite.js"></script>
+    <!-- Incluindo a biblioteca tokml -->
+    <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
+    <!-- Incluindo a biblioteca Turf.js -->
+    <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        #cabeçalho {
+            display: flex;
+            width: 100%;
+            height: 115px;
+            background-color: white;
+        }
+
+        #cabeçalho-esquerdo {
+            flex: 1;
+            height: 115px;
+            background-color: white;
+            overflow: hidden;
+        }
+
+        #cabeçalho-direito {
+            width: 148px;
+            height: 115px;
+            background-color: white;
+        }
+
+        #cabeçalho-esquerdo img {
+            height: 115px;
+            width: 100%;
+        }
+
+        #cabeçalho-direito a img {
+            width: 148px;
+            height: 115px;
+        }
+
+        #produto-tarefa-menu-container {
+            display: flex;
+            width: 100%;
+            height: auto;
+            background-color: #E3E3E3;
+            box-sizing: border-box;
+        }
+
+        #produto-tarefa-container, #base, #menu {
+            height: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #F2F2F2;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #produto-tarefa-container label {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        #produto-tarefa-container input {
+            width: 125px;
+            margin-bottom: 10px;
+        }
+
+        #produto-tarefa-container button {
+            width: 90px;
+            background-color: #444444;
+            color: white;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        #base select {
+            width: 85px;
+            margin-bottom: 12px;
+        }
+
+        #base input[type="range"] {
+            width: 105px;
+            accent-color: darkgreen;
+        }
+
+        #base label[for="transparency"] {
+            font-size: 0.9em;
+            display: block;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+
+        #menu button {
+            width: 80px;
+            height: 27px;
+            margin: 3px 0;
+            background-color: #8F8F8F;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        #main-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: calc(98vh - 115px - 87px - 35px);
+            justify-content: center;
+            background-color: #F2F2F2;
+        }
+
+        #canvas-container {
+            width: 80%;
+            height: 100%;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidebar {
+            width: 280px;
+            max-width: 65%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: -280px;
+            background-color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background-color: #1F980C;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .sidebar-content {
+            padding: 10px;
+            overflow-y: auto;
+            height: calc(100% - 80px);
+            background: #F2F2F2;
+        }
+
+        #prescricao {
+            margin-bottom: 10px;
+        }
+
+        .control-section {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 5px; /* Adiciona arredondamento */
+            background: #F2F2F2;
+            text-align: center;
+        }
+
+        .control-section label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .control-section input[type="text"] {
+            width: 150px;
+            margin-bottom: 5px;
+        }
+
+        .control-section button {
+            margin-bottom: 5px;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        .control-section button#validate-button {
+            width: 135px;
+            height: 27px;
+            display: block;
+            margin: 0 auto;
+            background-color: #444444;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .button-group button {
+            width: 100px;
+            height: auto;
+            min-height: 25px;
+            font-size: 12px;
+            background-color: #E8FFF1;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        #export-section {
+            margin-top: 10px;
+        }
+
+        #export-section button {
+            font-size: 12px;
+            background-color: #8F8F8F;
+            width: auto;
+            margin: 5px;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        .legend {
+            max-height: 226px;
+            overflow-y: auto;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: white;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid black;
+        }
+
+        .feature-info {
+            font-size: 13px;
+            margin-bottom: 7px;
+            margin-left: 20px;
+        }
+
+        .validated-label {
+            font-size: 16px;
+            color: red;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+        }
+
+        .label-style {
+            text-shadow: 1px 1px 2px white, -1px -1px 2px white;
+        }
+
+        .collapse-arrow {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: black;
+            transition: transform 0.3s ease-in-out;
+            transform: rotate(180deg); /* Adiciona a rotação inicial */
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            #main-container {
+                flex-direction: column;
+                height: calc(100vh - 28vh);
+            }
+
+            #canvas-container {
+                width: 100%;
+                height: 72%;
+            }
+
+            .sidebar {
+                width: 80%;
+                left: -80%;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            #layer-selector,
+            #transparency-container {
+                right: 10px;
+            }
+        }
+
+        #prescricao strong {
+            margin-bottom: 15px;
+        }
+
+        #export-section {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            background-color: #F2F2F2;
+        }
+
+        .information-group {
+            margin-top: 30px;
+        }
+
+        #rodapé {
+            width: 100%;
+            height: 35px;
+            background-color: #F2F2F2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #rodapé p {
+            margin: 0;
+            font-size: 12px;
+            color: black;
+        }
+
+        /* Estilos para o popup */
+        .popup {
+            position: fixed;
+            border-radius: 15px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: #F2F2F2;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            text-align: center;
+        }
+
+        .popup button {
+            margin: 10px;
+            border-radius: 5px; /* Adiciona arredondamento */
+        }
+
+        /* Estilos para cursor pointer em elementos clicáveis */
+        #cabeçalho-direito a, button {
+            cursor: pointer;
+        }
+
+        .navigation-icon {
+            cursor: pointer;
+        }
+
+        /* Estilo para o ícone da régua */
+        #ruler-icon {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            z-index: 1000;
+            cursor: pointer;
+            background-color: white;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        #ruler-icon img {
+            width: 30px;
+            height: 30px;
+        }
+
+        #ruler-icon.active {
+            background-color: #90EE90; /* Verde claro para indicar que a régua está ativa */
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="cabeçalho">
+        <div id="cabeçalho-esquerdo">
+            <img src="imagens/cabecalho_esquerdo_1290.png" id="img-cabecalho-esquerdo">
+        </div>
+        <div id="cabeçalho-direito">
+            <a href="https://www.agroxeque.com.br/operacao" target="_blank">
+                <img src="imagens/logo_cabecalho.png">
+            </a>
+        </div>
+    </div>
+    <div id="produto-tarefa-menu-container">
+        <div id="produto-tarefa-container">
+            <label for="product-task">Produto/tarefa:</label>
+            <input type="text" id="product-task" maxlength="28">
+            <button id="create-button">Criar</button>
+        </div>
+        <div id="base">
+            <select id="layers">
+                <option value="ortofoto">Ortofoto</option>
+                <option value="vari">VARI</option>
+            </select>
+            <label for="transparency">Transparência:</label>
+            <input type="range" id="transparency" min="0" max="100" value="0">
+        </div>
+        <div id="menu">
+            <button id="toggle-prescricao">☰ Painel</button>
+            <button id="toggle-navigation">Navegação</button>
+        </div>
+    </div>
+    <div id="main-container">
+        <div id="canvas-container">
+            <div id="map"></div>
+        </div>
+        <div id="sidebar-prescricao" class="sidebar">
+            <div class="sidebar-header">
+                Operação:<br><span id="sidebar-title"></span>
+                <span class="collapse-arrow">➔</span>
+            </div>
+            <div class="sidebar-content">
+                <div id="prescricao">
+                    <div id="id-section" class="control-section">
+                        <label for="taxa-id">Taxa ou ID:</label>
+                        <input type="text" id="taxa-id" maxlength="12" disabled>
+                        <button id="validate-button" disabled>Validar</button>
+                    </div>
+                    <div class="button-group">
+                        <button id="select-all-button" disabled>Selecionar tudo</button>
+                        <button id="clear-all-button" disabled>Limpar tudo</button>
+                    </div>
+                    <div id="export-section" class="control-section">
+                        <button id="export-button" disabled>Exportar GeoJSON</button>
+                        <button id="export-shp-button" disabled>Exportar SHP</button>
+                        <button id="export-kml-button" disabled>Exportar KML</button>
+                    </div>
+                    <div class="legend" id="legend-items"></div>
+                    <div id="info-container" class="information-group">
+                        <div class="feature-info" id="feature-count">
+                            Total de células: 0
+                        </div>
+                        <div class="feature-info" id="total-area">
+                            Área Total: 0 ha
+                        </div>
+                        <div class="feature-info" id="selected-feature-count">
+                            Células selecionadas: 0
+                        </div>
+                        <div class="feature-info" id="selected-area">
+                            Área Selecionada: 0 ha
+                        </div>
+                        <div class="feature-info" id="validated-area">
+                            Área Validada: 0 ha
+                        </div>
+                        <div class="feature-info" id="total-volume">
+                            Quantidade Total: 0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="rodapé">
+        <p>AgroXeque - Agricultura Digital<br>todos os direitos reservados</p>
+    </div>
+    <script>
+        var map = L.map('map').fitWorld();
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 24
+        }).addTo(map);
+
+        let currentOverlay;
+        let gradeLayer;
+        let labelLayers = [];
+        let featureCount = 0;
+        let totalArea = 0; // Total area variable
+        let selectedFeatures = new Set();
+        let validatedFeatures = [];
+        let validatedArea = 0; // Área validada
+        let createdTableName = null;
+        let legendItems = {};
+        let userMarker = null;
+        let watchId = null;
+
+        const colorPalette = ['#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#c0c0c0', '#ff6347', '#40e0d0', '#ee82ee', '#ff0000']; // Alterado para mover o vermelho para o final
+
+        let usedColors = [];
+        let lastViewState = {
+            center: null,
+            zoom: null
+        };
+
+        function addImageOverlay(imageUrl, bounds) {
+            if (currentOverlay) {
+                map.removeLayer(currentOverlay);
+            }
+            currentOverlay = L.imageOverlay(imageUrl, bounds).addTo(map);
+            if (!lastViewState.center || !lastViewState.zoom) {
+                map.fitBounds(bounds);
+                lastViewState.center = map.getCenter();
+                lastViewState.zoom = map.getZoom();
+            } else {
+                map.setView(lastViewState.center, lastViewState.zoom);
+            }
+        }
+
+        fetch('camadas/coordenadas.txt')
+            .then(response => response.text())
+            .then(text => {
+                const coords = JSON.parse(text);
+                const west = coords[0];
+                const south = coords[1];
+                const east = coords[2];
+                const north = coords[3];
+                const bounds = [[south, west], [north, east]];
+                addImageOverlay('camadas/ortofoto.png', bounds);
+                document.getElementById('layers').addEventListener('change', function(e) {
+                    const selectedLayer = e.target.value;
+                    lastViewState.center = map.getCenter();
+                    lastViewState.zoom = map.getZoom();
+                    if (selectedLayer === 'ortofoto') {
+                        addImageOverlay('camadas/ortofoto.png', bounds);
+                    } else if (selectedLayer === 'vari') {
+                        addImageOverlay('camadas/vari.png', bounds);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar o arquivo de coordenadas:', error);
+            });
+
+        function highlightFeature(e) {
+            if (!createdTableName) return;
+            const layer = e.target;
+            if (selectedFeatures.has(layer)) {
+                layer.setStyle({
+                    color: 'black',
+                    weight: 3,
+                    fillOpacity: 0,
+                    fillColor: ''
+                });
+                selectedFeatures.delete(layer);
+            } else {
+                layer.setStyle({
+                    color: 'blue',
+                    weight: 3,
+                    fillOpacity: 0.25,
+                    fillColor: 'white'
+                });
+                selectedFeatures.add(layer);
+            }
+            countSelectedFeatures();
+            calculateSelectedArea();
+        }
+
+        function countSelectedFeatures() {
+            const selectedCount = selectedFeatures.size;
+            document.getElementById('selected-feature-count').innerText = 'Células Selecionadas: ' + selectedCount;
+        }
+
+        function calculateSelectedArea() {
+            let totalSelectedArea = 0;
+            selectedFeatures.forEach(function(layer) {
+                if (layer.feature.properties && layer.feature.properties.area) {
+                    totalSelectedArea += layer.feature.properties.area;
+                }
+            });
+            document.getElementById('selected-area').innerText = 'Área Selecionada: ' + totalSelectedArea.toFixed(2) + ' ha';
+        }
+
+        function calculateValidatedArea() {
+            validatedArea = validatedFeatures.reduce((acc, feature) => {
+                return acc + feature.properties.area;
+            }, 0);
+            document.getElementById('validated-area').innerText = 'Área Validada: ' + validatedArea.toFixed(2) + ' ha';
+        }
+
+        function calculateTotalVolume() {
+            let totalVolume = 0;
+            gradeLayer.eachLayer(function(layer) {
+                if (layer.feature.properties && layer.feature.properties.userValue && layer.feature.properties.area) {
+                    totalVolume += layer.feature.properties.userValue * layer.feature.properties.area;
+                }
+            });
+            document.getElementById('total-volume').innerText = 'Quantidade Total: ' + totalVolume.toFixed(2);
+        }
+
+        fetch('camadas/grade.geojson')
+            .then(response => response.json())
+            .then(data => {
+                featureCount = data.features.length;
+                document.getElementById('feature-count').innerText = 'Total de células: ' + featureCount;
+
+                data.features.forEach(function(feature) {
+                    if (feature.properties && feature.properties.area) {
+                        totalArea += feature.properties.area;
+                    }
+                });
+                document.getElementById('total-area').innerText = 'Área Total: ' + totalArea.toFixed(2) + ' ha';
+
+                gradeLayer = L.geoJSON(data, {
+                    style: function() {
+                        return {
+                            color: 'black',
+                            weight: 3,
+                            fillOpacity: 0,
+                            opacity: 1
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.on({
+                            click: highlightFeature
+                        });
+
+                        if (feature.properties && feature.properties.score) {
+                            const centroid = layer.getBounds().getCenter();
+                            const label = L.marker(centroid, {
+                                icon: L.divIcon({
+                                    className: 'label-style',
+                                    html: feature.properties.score
+                                })
+                            }).addTo(map);
+                            label.on('click', function() {
+                                highlightFeature({ target: layer });
+                            });
+                            labelLayers.push(label);
+                        }
+                    }
+                }).addTo(map);
+
+                updateTransparency(document.getElementById('transparency').value);
+            })
+            .catch(error => {
+                console.error('Erro ao carregar o arquivo GeoJSON:', error);
+            });
+
+        function updateTransparency(value) {
+            if (gradeLayer) {
+                const opacityValue = 1 - (value / 100);
+                gradeLayer.eachLayer(function(layer) {
+                    layer.setStyle({
+                        opacity: opacityValue,
+                        fillOpacity: selectedFeatures.has(layer) ? 0.25 : 0
+                    });
+                });
+                labelLayers.forEach(function(label) {
+                    const labelElement = label.getElement();
+                    if (labelElement) {
+                        labelElement.style.opacity = opacityValue;
+                    }
+                });
+            }
+        }
+
+        document.getElementById('transparency').addEventListener('input', function(e) {
+            const transparencyValue = e.target.value;
+            updateTransparency(transparencyValue);
+        });
+
+        function createTable() {
+            const input = document.getElementById('product-task');
+            const tableName = input.value.trim();
+            if (tableName) {
+                createdTableName = tableName;
+                input.disabled = true;
+                input.style.backgroundColor = "lightgray";
+                document.getElementById('create-button').disabled = true;
+                document.getElementById('taxa-id').disabled = false;
+                document.getElementById('validate-button').disabled = false;
+                document.getElementById('select-all-button').disabled = false;
+                document.getElementById('clear-all-button').disabled = false;
+                document.getElementById('export-button').disabled = false;
+                document.getElementById('export-shp-button').disabled = false;
+                document.getElementById('export-kml-button').disabled = false;
+                alert('Operação criada com o nome: ' + tableName);
+                console.log('Tabela criada com o nome:', tableName);
+                document.getElementById('sidebar-title').innerText = tableName;
+            } else {
+                alert('O nome da operação não pode estar vazio');
+                console.log('O nome da tabela não pode estar vazio');
+            }
+        }
+
+        document.getElementById('create-button').addEventListener('click', createTable);
+
+        function getNextColor() {
+            for (let color of colorPalette) {
+                if (!usedColors.includes(color)) {
+                    usedColors.push(color);
+                    return color;
+                }
+            }
+            usedColors = [];
+            return colorPalette[0];
+        }
+
+        function updateLegend() {
+            const legendContainer = document.getElementById('legend-items');
+            legendContainer.innerHTML = '';
+            for (const key in legendItems) {
+                const item = legendItems[key];
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color:${item.color}"></div>
+                    <div>
+                        <strong>${key}</strong><br>
+                        Área: ${item.area.toFixed(2)} ha<br>
+                        Total produto: ${item.volume.toFixed(2)}
+                    </div>
+                `;
+                legendContainer.appendChild(legendItem);
+            }
+        }
+
+        function validateSelectedFeatures() {
+            const input = document.getElementById('taxa-id');
+            const value = input.value.trim();
+            if (value) {
+                const color = getNextColor();
+                let totalArea = 0;
+                let totalVolume = 0;
+                selectedFeatures.forEach(function(layer) {
+                    if (layer.feature.properties.userValue) {
+                        labelLayers = labelLayers.filter(label => {
+                            if (label.getLatLng().equals(layer.getBounds().getCenter())) {
+                                map.removeLayer(label);
+                                return false;
+                            }
+                            return true;
+                        });
+                    }
+                    layer.feature.properties.userValue = parseFloat(value);
+                    layer.setStyle({
+                        color: 'red',
+                        weight: 3,
+                        fillOpacity: 0.5,
+                        fillColor: color
+                    });
+                    const centroid = layer.getBounds().getCenter();
+                    const label = L.marker(centroid, {
+                        icon: L.divIcon({
+                            className: 'validated-label',
+                            html: value
+                        })
+                    }).addTo(map);
+                    labelLayers.push(label);
+                    selectedFeatures.delete(layer);
+                    validatedFeatures.push(layer.feature);
+
+                    totalArea += layer.feature.properties.area;
+                    totalVolume += layer.feature.properties.userValue * layer.feature.properties.area;
+                });
+
+                if (!legendItems[value]) {
+                    legendItems[value] = {
+                        color: color,
+                        area: 0,
+                        volume: 0
+                    };
+                }
+                legendItems[value].area += totalArea;
+                legendItems[value].volume += totalVolume;
+
+                input.value = '';
+                countSelectedFeatures();
+                calculateSelectedArea();
+                calculateTotalVolume();
+                updateLegend();
+                calculateValidatedArea(); // Atualiza a área validada
+            } else {
+                alert('O valor da Taxa ou ID não pode estar vazio');
+                console.log('O valor da Taxa ou ID não pode estar vazio');
+            }
+        }
+
+        document.getElementById('validate-button').addEventListener('click', validateSelectedFeatures);
+
+        function selectAllFeatures() {
+            gradeLayer.eachLayer(function(layer) {
+                if (!selectedFeatures.has(layer)) {
+                    layer.setStyle({
+                        color: 'blue',
+                        weight: 3,
+                        fillOpacity: 0.25,
+                        fillColor: 'white'
+                    });
+                    selectedFeatures.add(layer);
+                }
+            });
+            countSelectedFeatures();
+            calculateSelectedArea();
+        }
+
+        function clearAllSelections() {
+            selectedFeatures.forEach(function(layer) {
+                layer.setStyle({
+                    color: 'black',
+                    weight: 3,
+                    fillOpacity: 0,
+                    fillColor: ''
+                });
+            });
+            selectedFeatures.clear();
+            countSelectedFeatures();
+            calculateSelectedArea();
+        }
+
+        document.getElementById('select-all-button').addEventListener('click', selectAllFeatures);
+        document.getElementById('clear-all-button').addEventListener('click', clearAllSelections);
+
+        function exportToGeoJSON() {
+            if (!validatedFeatures.length) {
+                alert('Não há células validadas para exportar.');
+                return;
+            }
+
+            const geojson = {
+                type: "FeatureCollection",
+                features: validatedFeatures.map(feature => ({
+                    type: "Feature",
+                    geometry: feature.geometry,
+                    properties: {
+                        [createdTableName]: feature.properties.userValue
+                    }
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(geojson)], { type: "application/json" });
+            saveAs(blob, "exported_features.geojson");
+
+            validatedFeatures.forEach(function(feature) {
+                feature.properties.userValue = null;
+            });
+            validatedFeatures = [];
+
+            gradeLayer.eachLayer(function(layer) {
+                if (selectedFeatures.has(layer)) {
+                    layer.setStyle({
+                        color: 'green',
+                        weight: 3,
+                        fillOpacity: 0.25,
+                        fillColor: 'yellow'
+                    });
+                }
+            });
+
+            calculateValidatedArea(); // Atualiza a área validada após a exportação
+            showExportSuccessPopup();
+        }
+
+        document.getElementById('export-button').addEventListener('click', exportToGeoJSON);
+
+        function exportToShapefile() {
+            if (!validatedFeatures.length) {
+                alert('Não há células validadas para exportar.');
+                return;
+            }
+
+            const geojson = {
+                type: "FeatureCollection",
+                features: validatedFeatures.map(feature => ({
+                    type: "Feature",
+                    geometry: feature.geometry,
+                    properties: {
+                        [createdTableName]: feature.properties.userValue
+                    }
+                }))
+            };
+
+            console.log("GeoJSON para exportação:", geojson);
+
+            try {
+                shpwrite.download(geojson, { folder: 'shapefiles', types: { point: 'points', polygon: 'polygons', line: 'lines' } });
+                console.log("Tentativa de download do shapefile realizada.");
+                showExportSuccessPopup();
+            } catch (error) {
+                console.error("Erro ao gerar o shapefile:", error);
+                alert("Erro ao gerar o shapefile: " + error.message);
+            }
+        }
+
+        document.getElementById('export-shp-button').addEventListener('click', exportToShapefile);
+
+        function exportToKML() {
+            if (!validatedFeatures.length) {
+                alert('Não há células validadas para exportar.');
+                return;
+            }
+
+            const geojson = {
+                type: "FeatureCollection",
+                features: validatedFeatures.map(feature => ({
+                    type: "Feature",
+                    geometry: feature.geometry,
+                    properties: {}
+                }))
+            };
+
+            // Verifica e limpa as geometrias
+            geojson.features.forEach(feature => {
+                feature.geometry = turf.cleanCoords(feature.geometry);
+            });
+
+            // União progressiva
+            let combined = geojson.features[0];
+            for (let i = 1; i < geojson.features.length; i++) {
+                combined = turf.union(combined, geojson.features[i]);
+            }
+
+            const kml = tokml(combined);
+            const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+            saveAs(blob, "exported_features.kml");
+
+            validatedFeatures.forEach(function(feature) {
+                feature.properties.userValue = null;
+            });
+            validatedFeatures = [];
+
+            gradeLayer.eachLayer(function(layer) {
+                if (selectedFeatures.has(layer)) {
+                    layer.setStyle({
+                        color: 'green',
+                        weight: 3,
+                        fillOpacity: 0.25,
+                        fillColor: 'yellow'
+                    });
+                }
+            });
+
+            calculateValidatedArea(); // Atualiza a área validada após a exportação
+            showExportSuccessPopup();
+        }
+
+        document.getElementById('export-kml-button').addEventListener('click', exportToKML);
+
+        // Toggle sidebar functionality
+        function toggleSidebar(sidebarId) {
+            const sidebar = document.getElementById(sidebarId);
+
+            sidebar.classList.toggle('open');
+        }
+
+        document.getElementById('toggle-prescricao').addEventListener('click', function() {
+            toggleSidebar('sidebar-prescricao');
+        });
+
+        // Ajustar a largura da imagem do cabeçalho esquerdo
+        function adjustImageWidth() {
+            const container = document.getElementById('cabeçalho-esquerdo');
+            const img = document.getElementById('img-cabecalho-esquerdo');
+            img.style.width = `${container.clientWidth}px`;
+        }
+
+        // Função para alterar a imagem do cabeçalho esquerdo em telas menores
+        function updateHeaderImage() {
+            const img = document.getElementById('img-cabecalho-esquerdo');
+            if (window.innerWidth <= 500) {
+                img.src = 'imagens/cabecalho_esquerdo_270.png';
+            } else {
+                img.src = 'imagens/cabecalho_esquerdo_1290.png';
+            }
+        }
+
+        window.addEventListener('resize', adjustImageWidth);
+        window.addEventListener('resize', updateHeaderImage); // Adiciona listener para resize
+        window.addEventListener('load', adjustImageWidth);
+        window.addEventListener('load', updateHeaderImage); // Atualiza a imagem ao carregar a página
+
+        // Função de navegação
+        function updatePosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            if (userMarker) {
+                userMarker.setLatLng([lat, lon]);
+            } else {
+                userMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'navigation-icon',
+                        html: '<div style="background-color: darkgreen; width: 10px; height: 10px; border-radius: 50%;"></div>'
+                    })
+                }).addTo(map);
+            }
+
+            map.setView([lat, lon], 16);
+
+            console.log(`Localização atualizada!\nLatitude: ${lat}\nLongitude: ${lon}\nPrecisão: ${accuracy} metros.`);
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Permissão negada pelo usuário.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Informação de localização indisponível.");
+                    break;
+                case error.TIMEOUT:
+                    alert("A requisição para obter a localização expirou.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("Um erro desconhecido ocorreu.");
+                    break;
+            }
+        }
+
+        function startTracking() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(updatePosition, showError, { enableHighAccuracy: true });
+            } else {
+                alert("Geolocalização não é suportada por este navegador.");
+            }
+        }
+
+        function stopTracking() {
+            if (navigator.geolocation && watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                    userMarker = null;
+                }
+                alert("Rastreamento de localização parado.");
+            }
+        }
+
+        document.getElementById('toggle-navigation').addEventListener('click', function() {
+            if (watchId === null) {
+                startTracking();
+            } else {
+                stopTracking();
+            }
+        });
+
+        function showExportSuccessPopup() {
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            popup.innerHTML = `
+                <p>Como prefere continuar?</p>
+                <p></p>                
+                <div class="button-group">
+                    <button id="continue-button">Continuar operação</button>
+                    <button id="new-operation-button">Iniciar nova operação</button>
+                    <button id="home-button">Página inicial</button>
+                </div>
+            `;
+            document.body.appendChild(popup);
+
+            document.getElementById('continue-button').addEventListener('click', function() {
+                document.body.removeChild(popup);
+            });
+
+            document.getElementById('new-operation-button').addEventListener('click', function() {
+                location.reload();
+            });
+
+            document.getElementById('home-button').addEventListener('click', function() {
+                window.location.href = "https://www.agroxeque.com.br/operacao";
+            });
+        }
+
+        // Função para colapsar/recolher o sidebar
+        document.querySelector('.collapse-arrow').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar-prescricao');
+            sidebar.classList.toggle('open');
+            this.classList.toggle('collapsed');
+
+        let rulerActive = false;
+        let rulerPoints = [];
+
+        // Função para alternar a ativação da régua
+        document.getElementById('ruler-icon').addEventListener('click', function() {
+            rulerActive = !rulerActive;
+            this.classList.toggle('active');
+            rulerPoints = [];
+
+            if (!rulerActive) {
+                map.off('click', measureDistance);
+            } else {
+                map.on('click', measureDistance);
+            }
+        });
+
+        // Função para medir a distância
+        function measureDistance(e) {
+            if (rulerPoints.length === 0) {
+                rulerPoints.push(e.latlng);
+            } else if (rulerPoints.length === 1) {
+                rulerPoints.push(e.latlng);
+
+                // Calcula a distância usando Turf.js
+                const from = turf.point([rulerPoints[0].lng, rulerPoints[0].lat]);
+                const to = turf.point([rulerPoints[1].lng, rulerPoints[1].lat]);
+                const options = {units: 'meters'};
+                const distance = turf.distance(from, to, options);
+
+                // Exibe a distância em metros
+                L.popup()
+                    .setLatLng(rulerPoints[1])
+                    .setContent(`Distância: ${distance.toFixed(2)} metros`)
+                    .openOn(map);
+
+                // Limpa os pontos após a medição
+                rulerPoints = [];
+            }
+        }
+
+        });
+    </script>
+</body>
+</html>
