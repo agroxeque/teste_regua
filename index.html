@@ -404,7 +404,7 @@
             width: 10px;
             height: 10px;
             background-color: #01dedb;
-            border: 2px solid black;
+            border: 1px solid black;
             border-radius: 50%; /* Mantém os pontos arredondados */
         }
     </style>
@@ -1153,7 +1153,7 @@
                 if (rulerLine) {
                     map.removeLayer(rulerLine);
                 }
-                rulerLine = L.polyline(rulerPoints, {color: #293b13}).addTo(map);
+                rulerLine = L.polyline(rulerPoints, {color: 'blue'}).addTo(map);
 
                 // Calcula a distância usando Turf.js
                 const from = turf.point([rulerPoints[0].lng, rulerPoints[0].lat]);
