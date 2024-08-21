@@ -1153,7 +1153,7 @@
                 if (rulerLine) {
                     map.removeLayer(rulerLine);
                 }
-                rulerLine = L.polyline(rulerPoints, {color: 'white'}).addTo(map);
+                rulerLine = L.polyline(rulerPoints, {color: 'gray'}).addTo(map);
 
                 // Calcula a distância usando Turf.js
                 const from = turf.point([rulerPoints[0].lng, rulerPoints[0].lat]);
