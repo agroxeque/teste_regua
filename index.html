@@ -7,15 +7,10 @@
 
     <!-- Incluindo a biblioteca Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <!-- Incluindo a biblioteca Leaflet JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <!-- Incluindo a biblioteca FileSaver.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- Incluindo a biblioteca @fielda/shp-write -->
     <script src="https://unpkg.com/@fielda/shp-write@latest/shpwrite.js"></script>
-    <!-- Incluindo a biblioteca tokml -->
     <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
-    <!-- Incluindo a biblioteca Turf.js -->
     <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
 
     <style>
@@ -382,26 +377,35 @@
             cursor: pointer;
         }
 
-        /* Estilo para o ícone da régua */
+        /* Estilo para o ícone da régua - agora retangular */
         #ruler-icon {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 50px;
             z-index: 1000;
             cursor: pointer;
             background-color: white;
-            padding: 5px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 5px; /* Alterado para tornar retangular */
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
         #ruler-icon img {
-            width: 40px;
-            height: 24px;
+            width: 30px;
+            height: 30px;
         }
 
         #ruler-icon.active {
             background-color: #90EE90;
+        }
+
+        /* Estilo para os pontos de medição */
+        .ruler-point {
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border: 2px solid black;
+            border-radius: 50%; /* Mantém os pontos arredondados */
         }
     </style>
 </head>
@@ -512,7 +516,7 @@
         let userMarker = null;
         let watchId = null;
 
-        const colorPalette = ['#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#c0c0c0', '#ff6347', '#40e0d0', '#ee82ee', '#ff0000']; // Alterado para mover o vermelho para o final
+        const colorPalette = ['#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#c0c0c0', '#ff6347', '#40e0d0', '#ee82ee', '#ff0000'];
 
         let usedColors = [];
         let lastViewState = {
@@ -1132,7 +1136,12 @@
 
         // Função para medir a distância
         function measureDistance(e) {
-            const marker = L.marker(e.latlng).addTo(map);
+            // Cria o marcador com estilo personalizado
+            const marker = L.marker(e.latlng, {
+                icon: L.divIcon({
+                    className: 'ruler-point'
+                })
+            }).addTo(map);
             rulerMarkers.push(marker);
 
             if (rulerPoints.length === 0) {
