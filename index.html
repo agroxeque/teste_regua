@@ -1164,8 +1164,14 @@
                 // Exibe a distância em metros
                 L.popup()
                     .setLatLng(rulerPoints[1])
-                    .setContent(`Distância: ${distance.toFixed(2)} metros`)
+                    .setContent(`Distância: ${distance.toFixed(1)} metros`)
                     .openOn(map);
+                
+                // Se já houver dois pontos medidos, limpar os marcadores e a linha              
+                if (rulerPoints.length === 2) {
+                    clearRuler();
+                    rulerPoints = [];
+                }
 
                 // Limpa os pontos após a medição
                 rulerPoints = [];
