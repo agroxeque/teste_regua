@@ -1101,6 +1101,8 @@
         // Variáveis para a ferramenta de régua
         let rulerActive = false;
         let rulerPoints = [];
+        let rulerMarkers = [];
+        let rulerLine = null;
 
         // Função para alternar a ativação da régua
         document.getElementById('ruler-icon').addEventListener('click', function() {
@@ -1108,19 +1110,41 @@
             this.classList.toggle('active');
             rulerPoints = [];
 
+            // Remove marcadores e linha existentes ao desativar a régua
             if (!rulerActive) {
                 map.off('click', measureDistance);
+                clearRuler();
             } else {
                 map.on('click', measureDistance);
             }
         });
 
+        // Função para limpar os marcadores e a linha
+        function clearRuler() {
+            rulerMarkers.forEach(marker => map.removeLayer(marker));
+            rulerMarkers = [];
+
+            if (rulerLine) {
+                map.removeLayer(rulerLine);
+                rulerLine = null;
+            }
+        }
+
         // Função para medir a distância
         function measureDistance(e) {
+            const marker = L.marker(e.latlng).addTo(map);
+            rulerMarkers.push(marker);
+
             if (rulerPoints.length === 0) {
                 rulerPoints.push(e.latlng);
             } else if (rulerPoints.length === 1) {
                 rulerPoints.push(e.latlng);
+
+                // Desenha a linha entre os pontos
+                if (rulerLine) {
+                    map.removeLayer(rulerLine);
+                }
+                rulerLine = L.polyline(rulerPoints, {color: 'blue'}).addTo(map);
 
                 // Calcula a distância usando Turf.js
                 const from = turf.point([rulerPoints[0].lng, rulerPoints[0].lat]);
