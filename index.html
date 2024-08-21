@@ -381,11 +381,11 @@
         #ruler-icon {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 50px;
             z-index: 1000;
             cursor: pointer;
             background-color: white;
-            padding: 5px;
+            padding: 10px;
             border-radius: 5px; /* Alterado para tornar retangular */
             box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
@@ -401,10 +401,10 @@
 
         /* Estilo para os pontos de medição */
         .ruler-point {
-            width: 7px;
-            height: 7px;
-            background-color: #01dedb;
-            border: 1px solid black;
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border: 2px solid black;
             border-radius: 50%; /* Mantém os pontos arredondados */
         }
     </style>
@@ -1132,10 +1132,18 @@
                 map.removeLayer(rulerLine);
                 rulerLine = null;
             }
+
+            map.closePopup();  // Fechar o rótulo de distância
         }
 
         // Função para medir a distância
         function measureDistance(e) {
+            // Limpa os pontos, linha e rótulo quando uma nova medição é iniciada
+            if (rulerPoints.length === 2) {
+                clearRuler();
+                rulerPoints = [];
+            }
+
             // Cria o marcador com estilo personalizado
             const marker = L.marker(e.latlng, {
                 icon: L.divIcon({
@@ -1150,28 +1158,21 @@
                 rulerPoints.push(e.latlng);
 
                 // Desenha a linha entre os pontos
-                if (rulerLine) {
-                    map.removeLayer(rulerLine);
-                }
-                rulerLine = L.polyline(rulerPoints, {color: 'gray'}).addTo(map);
+                rulerLine = L.polyline(rulerPoints, { color: 'blue' }).addTo(map);
 
                 // Calcula a distância usando Turf.js
                 const from = turf.point([rulerPoints[0].lng, rulerPoints[0].lat]);
                 const to = turf.point([rulerPoints[1].lng, rulerPoints[1].lat]);
-                const options = {units: 'meters'};
+                const options = { units: 'meters' };
                 const distance = turf.distance(from, to, options);
 
-                // Exibe a distância em metros
+                // Exibe a distância em metros no primeiro ponto
                 L.popup()
-                    .setLatLng(rulerPoints[0])
-                    .setContent(`Distância: ${distance.toFixed(1)} metros`)
+                    .setLatLng(rulerPoints[0])  // Posiciona o rótulo no primeiro ponto
+                    .setContent(`Distância: ${distance.toFixed(2)} metros`)
                     .openOn(map);
-                
-                // Se já houver dois pontos medidos, limpar os marcadores e a linha              
-                if (rulerPoints.length === 2) {
-                    clearRuler();
-                    rulerPoints = [];
-                }
+
+                // Não limpar rulerPoints aqui para manter os pontos e a linha visíveis
             }
         }
     </script>
