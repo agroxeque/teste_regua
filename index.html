@@ -92,7 +92,7 @@
             width: 90px;
             background-color: #444444;
             color: white;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         #base select {
@@ -117,7 +117,7 @@
             height: 27px;
             margin: 3px 0;
             background-color: #8F8F8F;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         #main-container {
@@ -183,7 +183,7 @@
             width: 100%;
             margin-bottom: 10px;
             padding: 5px;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
             background: #F2F2F2;
             text-align: center;
         }
@@ -201,7 +201,7 @@
 
         .control-section button {
             margin-bottom: 5px;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         .control-section button#validate-button {
@@ -227,7 +227,7 @@
             min-height: 25px;
             font-size: 12px;
             background-color: #E8FFF1;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         #export-section {
@@ -239,7 +239,7 @@
             background-color: #8F8F8F;
             width: auto;
             margin: 5px;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         .legend {
@@ -290,7 +290,7 @@
             font-size: 20px;
             color: black;
             transition: transform 0.3s ease-in-out;
-            transform: rotate(180deg); /* Adiciona a rotação inicial */
+            transform: rotate(180deg);
         }
 
         @media (max-width: 768px) {
@@ -370,7 +370,7 @@
 
         .popup button {
             margin: 10px;
-            border-radius: 5px; /* Adiciona arredondamento */
+            border-radius: 5px;
         }
 
         /* Estilos para cursor pointer em elementos clicáveis */
@@ -401,10 +401,8 @@
         }
 
         #ruler-icon.active {
-            background-color: #90EE90; /* Verde claro para indicar que a régua está ativa */
+            background-color: #90EE90;
         }
-
-
     </style>
 </head>
 <body>
@@ -440,6 +438,9 @@
     <div id="main-container">
         <div id="canvas-container">
             <div id="map"></div>
+            <div id="ruler-icon">
+                <img src="imagens/ruler_icon.png" alt="Régua">
+            </div>
         </div>
         <div id="sidebar-prescricao" class="sidebar">
             <div class="sidebar-header">
@@ -489,9 +490,6 @@
     </div>
     <div id="rodapé">
         <p>AgroXeque - Agricultura Digital<br>todos os direitos reservados</p>
-    </div>   
-    <div id="ruler-icon">
-        <img src="imagens/ruler_icon.png" alt="Régua">     
     </div>
     <script>
         var map = L.map('map').fitWorld();
@@ -995,9 +993,9 @@
         }
 
         window.addEventListener('resize', adjustImageWidth);
-        window.addEventListener('resize', updateHeaderImage); // Adiciona listener para resize
+        window.addEventListener('resize', updateHeaderImage);
         window.addEventListener('load', adjustImageWidth);
-        window.addEventListener('load', updateHeaderImage); // Atualiza a imagem ao carregar a página
+        window.addEventListener('load', updateHeaderImage);
 
         // Função de navegação
         function updatePosition(position) {
@@ -1098,7 +1096,9 @@
             const sidebar = document.getElementById('sidebar-prescricao');
             sidebar.classList.toggle('open');
             this.classList.toggle('collapsed');
+        });
 
+        // Variáveis para a ferramenta de régua
         let rulerActive = false;
         let rulerPoints = [];
 
@@ -1138,8 +1138,6 @@
                 rulerPoints = [];
             }
         }
-
-        });
     </script>
 </body>
 </html>
